@@ -56,7 +56,7 @@ export default function SplashScreen() {
         </View>
         
         {/* App Name */}
-        <Text style={styles.appName}>Bus Traker</Text>
+        <Text style={styles.appName}>Bus Tracker</Text>
         <Text style={styles.tagline}>
           {getTranslation('appTagline', currentLanguage)}
         </Text>
