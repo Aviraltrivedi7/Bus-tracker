@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-
   RefreshControl,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay,
+  FadeInDown,
+  FadeInRight
+} from 'react-native-reanimated';
 import useAppStore from '../../store/useAppStore';
 import { getTranslation } from '../../utils/translations';
 import BusCard from '../../components/BusCard';
+import { Theme } from '../../utils/theme';
 
 const { width } = Dimensions.get('window');
+
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -38,11 +48,9 @@ export default function HomeScreen() {
   };
 
   const getNearbyBuses = () => {
-    // If no location, show all buses
     if (!hasLocationPermission || !currentLocation) {
-      return buses.slice(0, 5); // Show first 5 buses
+      return buses.slice(0, 5);
     }
-    // In a real app, this would calculate distance from current location
     return buses.filter(bus => bus.status !== 'breakdown').slice(0, 5);
   };
 
@@ -63,54 +71,108 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Bus Traker</Text>
-        <TouchableOpacity 
+      <Animated.View
+        entering={FadeInDown.duration(600)}
+        style={styles.header}
+      >
+        <View>
+          <Text style={styles.headerSubtitle}>{getTranslation('welcome', currentLanguage) || 'Welcome to'}</Text>
+          <Text style={styles.headerTitle}>Bus Traker</Text>
+        </View>
+        <TouchableOpacity
           style={styles.languageButton}
           onPress={() => router.push('/(tabs)/settings')}
         >
-          <MaterialIcons name="language" size={24} color="#2196F3" />
+          <MaterialIcons name="language" size={24} color={Theme.colors.primary} />
         </TouchableOpacity>
-      </View>
-
-      {/* Search Bar */}
-      <TouchableOpacity style={styles.searchContainer} onPress={handleSearchPress}>
-        <MaterialIcons name="search" size={20} color="#757575" />
-        <Text style={styles.searchPlaceholder}>
-          {getTranslation('searchPlaceholder', currentLanguage)}
-        </Text>
-      </TouchableOpacity>
+      </Animated.View>
 
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Theme.colors.primary]}
+          />
         }
       >
+        {/* Search Bar */}
+        <AnimatedTouchableOpacity
+          entering={FadeInDown.delay(200).duration(600)}
+          style={styles.searchContainer}
+          onPress={handleSearchPress}
+          activeOpacity={0.8}
+        >
+          <MaterialIcons name="search" size={22} color={Theme.colors.text.secondary} />
+          <Text style={styles.searchPlaceholder}>
+            {getTranslation('searchPlaceholder', currentLanguage)}
+          </Text>
+          <View style={styles.searchIconContainer}>
+            <MaterialIcons name="tune" size={20} color={Theme.colors.primary} />
+          </View>
+        </AnimatedTouchableOpacity>
+
         {/* Offline Mode Banner */}
         {!isOnline && (
-          <View style={styles.offlineBanner}>
-            <MaterialIcons name="wifi-off" size={20} color="#FF9800" />
+          <Animated.View
+            entering={FadeInDown}
+            style={styles.offlineBanner}
+          >
+            <MaterialIcons name="wifi-off" size={20} color={Theme.colors.status.delayed} />
             <Text style={styles.offlineText}>
               {getTranslation('offlineMode', currentLanguage)}
             </Text>
-          </View>
+          </Animated.View>
         )}
 
         {/* Location Status */}
-        <View style={styles.locationContainer}>
-          <MaterialIcons 
-            name={hasLocationPermission ? "location-on" : "location-off"} 
-            size={16} 
-            color={hasLocationPermission ? "#4CAF50" : "#757575"} 
+        <Animated.View
+          entering={FadeInDown.delay(300)}
+          style={styles.locationContainer}
+        >
+          <MaterialIcons
+            name={hasLocationPermission ? "location-on" : "location-off"}
+            size={16}
+            color={hasLocationPermission ? Theme.colors.secondary : Theme.colors.text.secondary}
           />
           <Text style={styles.locationText}>
-            {hasLocationPermission 
+            {hasLocationPermission
               ? getTranslation('nearbyBuses', currentLanguage)
               : getTranslation('locationNotAvailable', currentLanguage)
             }
           </Text>
+        </Animated.View>
+
+        {/* Quick Access Section */}
+        <View style={styles.quickAccessSection}>
+          <Text style={styles.sectionTitle}>
+            {getTranslation('quickAccess', currentLanguage)}
+          </Text>
+
+          <View style={styles.quickAccessGrid}>
+            {[
+              { id: 'routes', icon: 'route', color: Theme.colors.secondary, label: 'routes', path: '/(tabs)/routes' },
+              { id: 'recent', icon: 'history', color: Theme.colors.accent, label: 'recentSearches', path: '/search' },
+              { id: 'map', icon: 'map', color: Theme.colors.primary, label: 'fullMapView', path: '/(tabs)/track' }
+            ].map((item, index) => (
+              <AnimatedTouchableOpacity
+                key={item.id}
+                entering={FadeInRight.delay(400 + index * 100)}
+                style={styles.quickAccessCard}
+                onPress={() => router.push(item.path as any)}
+              >
+                <View style={[styles.quickAccessIconBg, { backgroundColor: item.color + '15' }]}>
+                  <MaterialIcons name={item.icon as any} size={28} color={item.color} />
+                </View>
+                <Text style={styles.quickAccessText}>
+                  {getTranslation(item.label as any, currentLanguage)}
+                </Text>
+              </AnimatedTouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Nearby Buses Section */}
@@ -126,10 +188,9 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {nearbyBuses.map((bus) => {
+          {nearbyBuses.map((bus, index) => {
             const route = routes.find(r => r.id === bus.routeId);
             if (!route) return null;
-
 
             return (
               <BusCard
@@ -138,60 +199,27 @@ export default function HomeScreen() {
                 route={route}
                 onPress={() => handleBusPress(bus.id)}
                 currentLanguage={currentLanguage}
+                index={index}
               />
             );
           })}
 
           {nearbyBuses.length === 0 && (
-            <View style={styles.emptyState}>
-              <MaterialIcons name="directions-bus" size={48} color="#E0E0E0" />
+            <Animated.View
+              entering={FadeInDown.delay(500)}
+              style={styles.emptyState}
+            >
+              <View style={styles.emptyIconCircle}>
+                <MaterialIcons name="bus-alert" size={48} color={Theme.colors.text.muted} />
+              </View>
               <Text style={styles.emptyStateText}>
                 {getTranslation('busServiceUnavailable', currentLanguage)}
               </Text>
               <Text style={styles.emptyStateSubText}>
                 {getTranslation('tryAgainLater', currentLanguage)}
               </Text>
-            </View>
+            </Animated.View>
           )}
-        </View>
-
-        {/* Quick Access Section */}
-        <View style={styles.quickAccessSection}>
-          <Text style={styles.sectionTitle}>
-            {getTranslation('quickAccess', currentLanguage)}
-          </Text>
-          
-          <View style={styles.quickAccessGrid}>
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
-              onPress={() => router.push('/(tabs)/routes')}
-            >
-              <MaterialIcons name="route" size={32} color="#4CAF50" />
-              <Text style={styles.quickAccessText}>
-                {getTranslation('routes', currentLanguage)}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
-              onPress={handleSearchPress}
-            >
-              <MaterialIcons name="history" size={32} color="#FF9800" />
-              <Text style={styles.quickAccessText}>
-                {getTranslation('recentSearches', currentLanguage)}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.quickAccessCard}
-              onPress={handleMapViewPress}
-            >
-              <MaterialIcons name="map" size={32} color="#2196F3" />
-              <Text style={styles.quickAccessText}>
-                {getTranslation('fullMapView', currentLanguage)}
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -201,148 +229,175 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: Theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
+    backgroundColor: Theme.colors.surface,
+    ...Theme.shadows.sm,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: Theme.colors.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '600',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2196F3',
+    fontSize: 24,
+    fontWeight: '800',
+    color: Theme.colors.primary,
   },
   languageButton: {
-    padding: 8,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 12,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  searchPlaceholder: {
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#757575',
-    flex: 1,
+    padding: 10,
+    backgroundColor: Theme.colors.primary + '10',
+    borderRadius: Theme.radius.md,
   },
   content: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: Theme.spacing.xl,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.md,
+    marginTop: Theme.spacing.md,
+    marginBottom: Theme.spacing.sm,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: 14,
+    borderRadius: Theme.radius.lg,
+    ...Theme.shadows.sm,
+  },
+  searchPlaceholder: {
+    marginLeft: 12,
+    fontSize: 16,
+    color: Theme.colors.text.secondary,
+    flex: 1,
+  },
+  searchIconContainer: {
+    padding: 4,
+    borderLeftWidth: 1,
+    borderLeftColor: Theme.colors.border,
+    paddingLeft: 12,
+  },
   offlineBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    paddingHorizontal: 16,
+    backgroundColor: Theme.colors.status.delayed + '15',
+    marginHorizontal: Theme.spacing.md,
+    marginTop: Theme.spacing.sm,
+    paddingHorizontal: Theme.spacing.md,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: Theme.radius.md,
     borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
+    borderLeftColor: Theme.colors.status.delayed,
   },
   offlineText: {
     marginLeft: 8,
     fontSize: 14,
-    color: '#F57C00',
+    color: Theme.colors.status.delayed,
+    fontWeight: '600',
     flex: 1,
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: Theme.spacing.md,
+    marginVertical: Theme.spacing.md,
   },
   locationText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    marginLeft: 6,
+    fontSize: 13,
+    color: Theme.colors.text.secondary,
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 24,
+    marginTop: Theme.spacing.md,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 12,
+    marginHorizontal: Theme.spacing.md,
+    marginBottom: Theme.spacing.md,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: '700',
+    color: Theme.colors.text.primary,
   },
   viewAllText: {
     fontSize: 14,
-    color: '#2196F3',
-    fontWeight: '500',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    borderRadius: 12,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#666',
-    marginTop: 16,
-    textAlign: 'center',
-  },
-  emptyStateSubText: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 8,
-    textAlign: 'center',
+    color: Theme.colors.primary,
+    fontWeight: '600',
   },
   quickAccessSection: {
-    marginHorizontal: 16,
-    marginBottom: 24,
+    marginHorizontal: Theme.spacing.md,
+    marginTop: Theme.spacing.sm,
   },
   quickAccessGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
+    marginTop: Theme.spacing.md,
   },
   quickAccessCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: Theme.colors.surface,
+    borderRadius: Theme.radius.lg,
+    padding: Theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    width: (width - 48) / 3, // Account for margins
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    width: (width - (Theme.spacing.md * 3)) / 3,
+    ...Theme.shadows.sm,
+  },
+  quickAccessIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   quickAccessText: {
-    marginTop: 8,
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#666',
+    fontSize: 11,
+    fontWeight: '700',
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Theme.spacing.xl,
+    backgroundColor: Theme.colors.surface,
+    marginHorizontal: Theme.spacing.md,
+    borderRadius: Theme.radius.lg,
+    marginTop: Theme.spacing.sm,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: Theme.colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: Theme.spacing.md,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Theme.colors.text.primary,
+    textAlign: 'center',
+  },
+  emptyStateSubText: {
+    fontSize: 14,
+    color: Theme.colors.text.secondary,
+    marginTop: 4,
     textAlign: 'center',
   },
 });
