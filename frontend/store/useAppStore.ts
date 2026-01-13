@@ -31,11 +31,7 @@ const useAppStore = create<AppState>((set, get) => ({
     },
     recentSearches: []
   },
-<<<<<<< HEAD
   currentLocation: { latitude: 26.4499, longitude: 80.3319 }, // Kanpur Center
-=======
-  currentLocation: null,
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
   isLoading: false,
   hasLocationPermission: false,
   hasNotificationPermission: false,
@@ -49,11 +45,7 @@ const useAppStore = create<AppState>((set, get) => ({
       const route = routes.find(r => r.id === bus.routeId);
       return route ? simulateBusMovement(bus, route) : bus;
     });
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     set({ buses: updatedBuses });
   },
 
@@ -63,7 +55,6 @@ const useAppStore = create<AppState>((set, get) => ({
 
   planJourney: async (fromStop: BusStop, toStop: BusStop): Promise<JourneyPlan> => {
     set({ isPlanning: true });
-<<<<<<< HEAD
 
     try {
       const { routes, buses } = get();
@@ -71,30 +62,14 @@ const useAppStore = create<AppState>((set, get) => ({
       // Find routes that connect the two stops
       const routeOptions: RouteOption[] = [];
 
-=======
-    
-    try {
-      const { routes, buses } = get();
-      
-      // Find routes that connect the two stops
-      const routeOptions: RouteOption[] = [];
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
       // Direct route (no transfers)
       routes.forEach(route => {
         const fromIndex = route.stops.findIndex(stop => stop.id === fromStop.id);
         const toIndex = route.stops.findIndex(stop => stop.id === toStop.id);
-<<<<<<< HEAD
 
         if (fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex) {
           const routeBuses = buses.filter(bus => bus.routeId === route.id && bus.status !== 'breakdown');
 
-=======
-        
-        if (fromIndex !== -1 && toIndex !== -1 && fromIndex < toIndex) {
-          const routeBuses = buses.filter(bus => bus.routeId === route.id && bus.status !== 'breakdown');
-          
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
           if (routeBuses.length > 0) {
             const steps: JourneyStep[] = [{
               type: 'bus',
@@ -105,11 +80,7 @@ const useAppStore = create<AppState>((set, get) => ({
               fromStop,
               toStop
             }];
-<<<<<<< HEAD
 
-=======
-            
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
             routeOptions.push({
               id: `direct-${route.id}`,
               buses: routeBuses,
@@ -123,7 +94,6 @@ const useAppStore = create<AppState>((set, get) => ({
           }
         }
       });
-<<<<<<< HEAD
 
       // Routes with transfers
       routes.forEach(route1 => {
@@ -141,42 +111,15 @@ const useAppStore = create<AppState>((set, get) => ({
                 route2.stops.some(stop2 => stop2.id === stop1.id)
               );
 
-=======
-      
-      // Routes with transfers
-      routes.forEach(route1 => {
-        const fromIndex1 = route1.stops.findIndex(stop => stop.id === fromStop.id);
-        
-        if (fromIndex1 !== -1) {
-          routes.forEach(route2 => {
-            if (route1.id === route2.id) return;
-            
-            const toIndex2 = route2.stops.findIndex(stop => stop.id === toStop.id);
-            
-            if (toIndex2 !== -1) {
-              // Find common stops for transfer
-              const transferStops = route1.stops.filter(stop1 => 
-                route2.stops.some(stop2 => stop2.id === stop1.id)
-              );
-              
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
               if (transferStops.length > 0) {
                 const transferStop = transferStops[0];
                 const transfer1Index = route1.stops.findIndex(s => s.id === transferStop.id);
                 const transfer2Index = route2.stops.findIndex(s => s.id === transferStop.id);
-<<<<<<< HEAD
 
                 if (transfer1Index > fromIndex1 && transfer2Index < toIndex2) {
                   const buses1 = buses.filter(bus => bus.routeId === route1.id && bus.status !== 'breakdown');
                   const buses2 = buses.filter(bus => bus.routeId === route2.id && bus.status !== 'breakdown');
 
-=======
-                
-                if (transfer1Index > fromIndex1 && transfer2Index < toIndex2) {
-                  const buses1 = buses.filter(bus => bus.routeId === route1.id && bus.status !== 'breakdown');
-                  const buses2 = buses.filter(bus => bus.routeId === route2.id && bus.status !== 'breakdown');
-                  
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
                   if (buses1.length > 0 && buses2.length > 0) {
                     const steps: JourneyStep[] = [
                       {
@@ -206,15 +149,9 @@ const useAppStore = create<AppState>((set, get) => ({
                         toStop
                       }
                     ];
-<<<<<<< HEAD
 
                     const totalDuration = steps.reduce((sum, step) => sum + step.duration, 0);
 
-=======
-                    
-                    const totalDuration = steps.reduce((sum, step) => sum + step.duration, 0);
-                    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
                     routeOptions.push({
                       id: `transfer-${route1.id}-${route2.id}`,
                       buses: [...buses1, ...buses2],
@@ -232,17 +169,10 @@ const useAppStore = create<AppState>((set, get) => ({
           });
         }
       });
-<<<<<<< HEAD
 
       // Sort by total duration (fastest first)
       routeOptions.sort((a, b) => a.totalDuration - b.totalDuration);
 
-=======
-      
-      // Sort by total duration (fastest first)
-      routeOptions.sort((a, b) => a.totalDuration - b.totalDuration);
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
       const journeyPlan: JourneyPlan = {
         id: `journey-${Date.now()}`,
         fromStop,
@@ -251,7 +181,6 @@ const useAppStore = create<AppState>((set, get) => ({
         totalDuration: routeOptions[0]?.totalDuration || 0,
         createdAt: new Date()
       };
-<<<<<<< HEAD
 
       set({ currentJourneyPlan: journeyPlan, isPlanning: false });
 
@@ -260,16 +189,6 @@ const useAppStore = create<AppState>((set, get) => ({
 
       return journeyPlan;
 
-=======
-      
-      set({ currentJourneyPlan: journeyPlan, isPlanning: false });
-      
-      // Add to recent journeys
-      get().addRecentJourney(journeyPlan);
-      
-      return journeyPlan;
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     } catch (error) {
       console.error('Error planning journey:', error);
       set({ isPlanning: false });
@@ -280,11 +199,7 @@ const useAppStore = create<AppState>((set, get) => ({
   addRecentJourney: async (journey: JourneyPlan) => {
     const { preferences } = get();
     const recentJourneys = [journey, ...preferences.routePlanner.recentJourneys.filter(j => j.id !== journey.id)].slice(0, 10);
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     const newPreferences = {
       ...preferences,
       routePlanner: {
@@ -292,11 +207,7 @@ const useAppStore = create<AppState>((set, get) => ({
         recentJourneys
       }
     };
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     set({ preferences: newPreferences });
     await AsyncStorage.setItem('userPreferences', JSON.stringify(newPreferences));
   },
@@ -308,17 +219,10 @@ const useAppStore = create<AppState>((set, get) => ({
   setLanguage: async (language) => {
     const { preferences } = get();
     const newPreferences = { ...preferences, language };
-<<<<<<< HEAD
 
     set({
       preferences: newPreferences,
       currentLanguage: language
-=======
-    
-    set({ 
-      preferences: newPreferences,
-      currentLanguage: language 
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     });
     await AsyncStorage.setItem('userPreferences', JSON.stringify(newPreferences));
   },
@@ -326,20 +230,12 @@ const useAppStore = create<AppState>((set, get) => ({
   addRecentSearch: async (search) => {
     const { preferences } = get();
     const recentSearches = [search, ...preferences.recentSearches.filter(s => s !== search)].slice(0, 10);
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     const newPreferences = {
       ...preferences,
       recentSearches
     };
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     set({ preferences: newPreferences });
     await AsyncStorage.setItem('userPreferences', JSON.stringify(newPreferences));
   },
@@ -382,28 +278,16 @@ const useAppStore = create<AppState>((set, get) => ({
 
   requestPermissions: async () => {
     set({ isLoading: true });
-<<<<<<< HEAD
 
-=======
-    
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     try {
       // Request location permission
       const { status: locationStatus } = await Location.requestForegroundPermissionsAsync();
       const hasLocationPermission = locationStatus === 'granted';
-<<<<<<< HEAD
 
       // Request notification permission
       const { status: notificationStatus } = await Notifications.requestPermissionsAsync();
       const hasNotificationPermission = notificationStatus === 'granted';
 
-=======
-      
-      // Request notification permission
-      const { status: notificationStatus } = await Notifications.requestPermissionsAsync();
-      const hasNotificationPermission = notificationStatus === 'granted';
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
       // Get current location if permission granted
       let currentLocation = null;
       if (hasLocationPermission) {
@@ -417,22 +301,14 @@ const useAppStore = create<AppState>((set, get) => ({
           console.log('Error getting location:', error);
         }
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
       set({
         hasLocationPermission,
         hasNotificationPermission,
         currentLocation,
         isLoading: false
       });
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
       // Load saved preferences
       try {
         const savedPreferences = await AsyncStorage.getItem('userPreferences');
@@ -455,25 +331,15 @@ const useAppStore = create<AppState>((set, get) => ({
             favorites: loaded.favorites ?? { routes: [], stops: [] },
             recentSearches: loaded.recentSearches ?? [],
           };
-<<<<<<< HEAD
           set({
             preferences,
             currentLanguage: preferences.language
-=======
-          set({ 
-            preferences,
-            currentLanguage: preferences.language 
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
           });
         }
       } catch (error) {
         console.log('Error loading preferences:', error);
       }
-<<<<<<< HEAD
 
-=======
-      
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     } catch (error) {
       console.log('Error requesting permissions:', error);
       set({ isLoading: false });

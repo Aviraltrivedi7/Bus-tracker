@@ -1,19 +1,11 @@
 {
   "expo": {
     "name": "Bus Tracker",
-<<<<<<< HEAD
     "slug": "bus-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "bus-tracker",
-=======
-    "slug": "frontend",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
->>>>>>> daac1007b293e2ff28eac63363055d4df80a3f8b
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
